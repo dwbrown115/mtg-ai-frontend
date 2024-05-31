@@ -15,13 +15,15 @@ function App() {
     "4 Cult Conscript 4 Forsaken Miner 4 Tinybones, the Pickpocket 4 Gisa, the Hellraiser 4 Cut Down 4 Go for the Throat 4 Tinybones Joins Up 4 Case of the Stashed Skeleton 4 Corpses of the Lost 22 Swamp 2 Sandstorm Verge"
   );
   const [filteredCards, setFilteredCards] = useState<any[]>([]);
-  const [deck, setDeck] = useState<any>({});
   const [showDeck, setShowDeck] = useState(false);
-  const [hand, setHand] = useState<any[]>([]);
   const [draw, setDraw] = useState(0)
+  const [life, setLife] = useState(20)
+  const [deck, setDeck] = useState<any>({});
+  const [graveyard, setGraveyard] = useState<any[]>([])
+  const [exile, setExile] = useState<any[]>([])
+  const [hand, setHand] = useState<any[]>([]);
   const [lands, setLands] = useState<any[]>([])
-  const [creatures, setCreatures] = useState<any[]>([])
-  const [enchantments, setEnchantments] = useState<any[]>([])
+  const [battlefield, setBattlefield] = useState<any[]>([])
 
   useEffect(() => {
     const data = (StandardAtomic as { data: any }).data;
