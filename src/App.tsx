@@ -19,6 +19,9 @@ function App() {
   const [showDeck, setShowDeck] = useState(false);
   const [hand, setHand] = useState<any[]>([]);
   const [draw, setDraw] = useState(0)
+  const [lands, setLands] = useState<any[]>([])
+  const [creatures, setCreatures] = useState<any[]>([])
+  const [enchantments, setEnchantments] = useState<any[]>([])
 
   useEffect(() => {
     const data = (StandardAtomic as { data: any }).data;
