@@ -18,6 +18,7 @@ function App() {
   const [deck, setDeck] = useState<any>({});
   const [showDeck, setShowDeck] = useState(false);
   const [hand, setHand] = useState<any[]>([]);
+  const [draw, setDraw] = useState(0)
 
   useEffect(() => {
     const data = (StandardAtomic as { data: any }).data;
@@ -167,12 +168,13 @@ function App() {
     // console.log(removedObjects, "removed objects");
 
     // Push the removed objects to the target array
-    setHand([...hand, ...removedObjects]);
+    // setHand([...hand, ...removedObjects]);
+    return removedObjects
   }
 
-  useEffect(() => {
-    console.log(hand, "hand");
-  }, [hand]);
+  //useEffect(() => {
+  // console.log(hand, "hand");
+  //}, [hand]);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -215,21 +217,19 @@ function App() {
         </button>
       </form>
       <div className="flex flex-col bg-orange-200 w-3/4 mx-auto py-2">
+        <input 
+          className="p-5 w-1/2 mx-auto my-2"
+          type="number"
+          value={draw}
+          onChange={(e: any) => setDraw(e.target.value)}
+          />
         <button
           className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
           onClick={() => {
-            moveObjectsByCount(deck.cards, 1);
+            setHand([...hand, ...moveObjectsByCount(deck.cards, draw)])
           }}
         >
-          Draw 1
-        </button>
-        <button
-          className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => {
-            moveObjectsByCount(deck.cards, 6);
-          }}
-        >
-          Draw 6
+          Draw {draw}
         </button>
         <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
           {hand?.map((card: any, index: any) => {
@@ -242,7 +242,7 @@ function App() {
                   </div>
                   <div className="flex flex-row justify-between">
                     <h1 className="text-sm">{card.type}</h1>
-                    <h1 className="text-sm">{card.printings}</h1>
+                    <h1 className="text-sm">{card.printings[0]}</h1>
                   </div>
                   <p className="text-xs">{card.text}</p>
                   {card.power && card.toughness ? (
