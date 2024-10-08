@@ -11,14 +11,15 @@ import StandardAtomic from "../jsonFiles/StandardAtomic.json";
 function App() {
   const [cards, setCards] = useState<any>({});
   const [search, setSearch] = useState("plains");
-  const [splitString, setSplitString] = useState(
-    "4 Cult Conscript 4 Forsaken Miner 4 Tinybones, the Pickpocket 4 Gisa, the Hellraiser 4 Cut Down 4 Go for the Throat 4 Tinybones Joins Up 4 Case of the Stashed Skeleton 4 Corpses of the Lost 22 Swamp 2 Sandstorm Verge"
+  const [deck1, setDeck1] = useState(
+    "30 Plains 30 Mountain"
   );
+  const [deck2, setDeck2] = useState("30 Forest 30 Swamp")
   const [filteredCards, setFilteredCards] = useState<any[]>([]);
-  const [showDeck, setShowDeck] = useState(false);
-  const [draw, setDraw] = useState(0)
+  const [showDeck, setShowDeck] = useState([false, false]);
+  const [draw, setDraw] = useState<any>([])
   const [life, setLife] = useState(20)
-  const [deck, setDeck] = useState<any>({});
+  const [decks, setDecks] = useState<any>([]);
   const [graveyard, setGraveyard] = useState<any[]>([])
   const [exile, setExile] = useState<any[]>([])
   const [hand, setHand] = useState<any[]>([]);
@@ -104,13 +105,13 @@ function App() {
     return null; // No exact match found
   }
 
-  function handleStringSplit(e: any) {
+  function handleStringSplit(e: any, deck: string, name: string) {
     e.preventDefault();
 
-    const deck = [];
-    // console.log("splitting string");
-    const result = parseCardString(splitString);
-    // console.log(result, "result");
+    const Deck = [];
+   // console.log("splitting string");
+    const result = parseCardString(deck);
+   // console.log(result, "result");
     for (let i = 0; i < result.length; i++) {
       // console.log(result[i].card, "card name")
       const card = findExactMatch(cards, result[i].card);
@@ -118,17 +119,24 @@ function App() {
 
       for (let i = 0; i < number; i++) {
         // console.log(number)
-        deck.push(card);
+        Deck.push(card);
         // console.log(set)
       }
-      //console.log(set, "set")
+      // console.log(set, "set")
     }
-    // console.log(deck, "deck")
-    setDeck({
-      name: "Deck 1",
-      cards: deck,
-    });
+   // console.log(Deck, "deck")
+    const newDeck = { name, cards: Deck}
+    const newHand = { name, cards: []}
+    const newDraw = 0
+    // setDeck(...deck, { name, cards: Deck});
+    setDecks([...decks, newDeck]);
+    setHand([...hand, newHand])
+    setDraw([...draw, newDraw])
   }
+
+  //useEffect(() => {
+  //  console.log(showDeck, "show deck")
+  //}, [showDeck])
 
   function shuffleArrayOfObjects(array: any) {
     let currentIndex = array.length;
@@ -146,35 +154,40 @@ function App() {
     return array;
   }
 
-  function handleShuffle() {
-    const shuffledDeck = shuffleArrayOfObjects(deck.cards);
+  function handleShuffle(object: any, index: number) {
+    const shuffledDeck = shuffleArrayOfObjects(object.cards);
     console.log(shuffledDeck, "suffled deck");
-    setDeck({
-      name: deck.name,
-      cards: shuffledDeck,
-    });
+    const newDecks = [...decks];
+    newDecks[index].cards = shuffledDeck;
+    setDecks(newDecks)
   }
 
-  function moveObjectsByCount(sourceArray: any, count: number) {
+  function handleDraw(index: number) {
+    const newDeck = [...decks];
+    const newHand = [...hand]
+
     // Check if the count is valid
-    if (count <= 0 || count > sourceArray.length) {
+    if (draw[index] <= 0 || draw[index] > newDeck[index].cards.length) {
       console.error("Invalid count provided.");
       return;
     }
 
     // Calculate the ending index for the splice
     // const endIndex = count - 1;
-    const sourceCopy = sourceArray;
 
     // Remove the specified number of elements from the front of the source array
-    const removedObjects = sourceCopy.splice(0, count);
-    setDeck({ ...deck, cards: sourceCopy });
+    const drawnCards = newDeck[index].cards.splice(0, draw[index]);
+    newHand[index].cards = drawnCards;
+
+    setHand(newHand)
+    setDecks(newDeck)
+    //console.log(drawnCards, "cards drawn")
+    // newDeck[index].cards = 
     // console.log(sourceCopy, "source array copy");
     // console.log(removedObjects, "removed objects");
 
     // Push the removed objects to the target array
     // setHand([...hand, ...removedObjects]);
-    return removedObjects
   }
 
   //useEffect(() => {
@@ -188,6 +201,21 @@ function App() {
   //     </div>
   //   );
   // });
+
+
+
+
+  function handleShowDeck(index: number) {
+    const newShowDeck = [...showDeck];
+    newShowDeck[index] = !newShowDeck[index];
+    setShowDeck(newShowDeck)
+  }
+
+  function handleDrawCount(index: number, count: number) {
+    const newDraw = [...draw];
+    newDraw[index] = count;
+    setDraw(newDraw)
+  }
 
   return (
     <div className="flex flex-col bg-red-100 justify-center">
@@ -210,34 +238,49 @@ function App() {
       </form>
       <form
         className="flex flex-col w-3/4 mx-auto bg-yellow-100"
-        onSubmit={handleStringSplit}
+        onSubmit={(e) => handleStringSplit(e, deck1, "Deck 1")}
       >
+        <div className="text-center text-xl">Deck 1</div>
         <textarea
           className="p-5 w-1/2 mx-auto my-2"
-          value={splitString}
-          onChange={(e: any) => setSplitString(e.target.value)}
+          value={deck1}
+          onChange={(e: any) => setDeck1(e.target.value)}
+        />
+        <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">Upload Deck</button>
+      </form>
+      <form
+        className="flex flex-col w-3/4 mx-auto bg-yellow-100"
+        onSubmit={(e) => handleStringSplit(e, deck2, "Deck 2")}
+      >
+        <div className="text-center text-xl">Deck 2</div>
+        <textarea
+          className="p-5 w-1/2 mx-auto my-2"
+          value={deck2}
+          onChange={(e: any) => setDeck2(e.target.value)}
         />
         <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">
           Upload Deck
         </button>
       </form>
-      <div className="flex flex-col bg-orange-200 w-3/4 mx-auto py-2">
+      {decks?.map((deck: any, index: any) => {
+        return (
+          <div key={index} className="border-t-2 border-b-2 border-black w-3/4 mx-auto ">
+            <h1 className="text-2xl text-center py-5 bg-green-300">{deck.name}</h1>
+      <div className="flex flex-col bg-orange-200 py-2">
         <input 
           className="p-5 w-1/2 mx-auto my-2"
           type="number"
-          value={draw}
-          onChange={(e: any) => setDraw(e.target.value)}
+          value={draw[index]}
+          onChange={(e: any) => handleDrawCount(index, e.target.value)}
           />
         <button
           className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => {
-            setHand([...hand, ...moveObjectsByCount(deck.cards, draw)])
-          }}
+          onClick={() => handleDraw(index)}
         >
-          Draw {draw}
+          Draw {draw[index]} Cards
         </button>
         <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
-          {hand?.map((card: any, index: any) => {
+          {hand[index]?.cards?.map((card: any, index: any) => {
             return (
               <div className="bg-slate-50" key={index}>
                 <div className="p-1 border border-gray-800 h-full">
@@ -261,24 +304,23 @@ function App() {
           })}
         </div>
       </div>
-      <div className="flex flex-col bg-purple-100 w-3/4 mx-auto py-2">
-        <h1 className="text-2xl text-center">{deck.name}</h1>
+      <div className="flex flex-col bg-purple-100 py-2">
         <div className="text-2xl text-center">
           Cards Remaining: {deck.cards?.length}
         </div>
         <button
           className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={handleShuffle}
+          onClick={() => handleShuffle(deck, index)}
         >
           Shuffle
         </button>
         <button
           className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => setShowDeck(!showDeck)}
+          onClick={() => handleShowDeck(index)}
         >
-          Show Deck
+          {showDeck[index] ? "Hide Deck" : "Show Deck"}
         </button>
-        {showDeck ? (
+        {showDeck[index] ? (
           <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
             {deck.cards?.map((card: any, index: any) => {
               return (
@@ -330,6 +372,9 @@ function App() {
           </div>
         ) : null}
       </div>
+      </div>
+        )
+      })}
       <div className="flex flex-col bg-green-100 w-3/4 mx-auto py-2">
         {filteredCards.map((card: any) => {
           return (
