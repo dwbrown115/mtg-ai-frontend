@@ -17,7 +17,20 @@ function App() {
   const [showDeck, setShowDeck] = useState<any[]>([false, false]);
   const [first, setFirst] = useState<number>(0);
   const [draw, setDraw] = useState<any[]>([]);
+  const [turn, setTurn] = useState<any[]>([0, 0]);
+  const [whoseTurn, setWhoseTurn] = useState<any[]>([]);
   const [life, setLife] = useState<any[]>([20, 20]);
+  const phase = [
+    { phase: "untap", current: false },
+    { phase: "upkeep", current: false },
+    { phase: "draw", current: false },
+    { phase: "main1", current: false },
+    { phase: "combat", current: false },
+    { phase: "main2", current: false },
+    { phase: "end", current: false },
+  ];
+  const [phases, setPhases] = useState<any[]>(phase);
+  const [phaseTracker, setPhaseTracker] = useState<number>(0);
   const [decks, setDecks] = useState<any[]>([]);
   const [graveyard, setGraveyard] = useState<any[]>([]);
   const [exile, setExile] = useState<any[]>([]);
@@ -42,11 +55,51 @@ function App() {
     const players = decks.length;
 
     if (players >= 2) {
-      const random = Math.floor(Math.random() * players) + 1;
-      setFirst(random);
+      const random = Math.floor(Math.random() * players);
+      console.log(random);
+      setFirst(random + 1);
+      const newWhoseTurn = [...whoseTurn];
+      newWhoseTurn[random].turn = true;
+      setWhoseTurn(newWhoseTurn);
+
+      const newTurn = [...turn];
+      newTurn[random] = 1;
+      setTurn(newTurn);
+
+      const newPhases = [...phases];
+      // newPhases[0].main1 = true;
+      newPhases[3].current = true;
+      setPhases(newPhases);
+      setPhaseTracker(3);
     }
   }
 
+  function handleChangePhase(player: number) {
+    if (whoseTurn[player].turn === true) {
+      const newPhases = [...phases];
+      const numberOfPhases = newPhases.length;
+      const newPhaseTracker = phaseTracker + 1;
+      console.log(numberOfPhases);
+      console.log(newPhaseTracker);
+      newPhases[phaseTracker].current = false;
+      if (newPhaseTracker < numberOfPhases) {
+        newPhases[newPhaseTracker].current = true;
+        setPhases(newPhases);
+        setPhaseTracker(newPhaseTracker);
+      } else if (newPhaseTracker >= numberOfPhases) {
+        newPhases[0].current = true;
+        setPhases(newPhases);
+        setPhaseTracker(0);
+      }
+      console.log(newPhases);
+      //setPhases(newPhases);
+      //if (newPhaseTracker < phases[0].length) {
+      //setPhaseTracker(newPhaseTracker);
+      //} else if (newPhaseTracker > phases[0].length) {
+      //setPhaseTracker(0);
+      //}
+    }
+  }
   function searchObject(obj: any, searchValue: string) {
     const result = [];
     const searchLower = searchValue.toLowerCase(); // Convert search term to lowercase
@@ -142,6 +195,9 @@ function App() {
     const newDraw = 0;
     // setDeck(...deck, { name, cards: Deck});
     setDecks([...decks, newDeck]);
+    const player = { player: index, turn: false };
+    const newWhoseTurn = [...whoseTurn, player];
+    setWhoseTurn(newWhoseTurn);
     setHand([...hand, newHand]);
     setDraw([...draw, newDraw]);
   }
@@ -203,8 +259,8 @@ function App() {
   }
 
   useEffect(() => {
-    console.log(filteredCards, "filtered cards");
-  }, [filteredCards]);
+    //console.log(filteredCards, "filtered cards");
+  }, []);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -245,6 +301,80 @@ function App() {
           Submit
         </button>
       </form>
+      {filteredCards.length > 0 ? (
+        <div className="flex flex-col bg-green-100 w-3/4 mx-auto pb-2 border-y border-black">
+          <div className="bg-violet-500 text-white px-5 pb-2 mb-2">
+            <h1 className="text-2xl text-center py-2.5">Search Results</h1>
+            <div className="">Number of results: {filteredCards.length}</div>
+            <div className="flex">
+              <button
+                className="p-2 bg-blue-100 w-1/4 mx-auto mb-2 text-black"
+                onClick={() => setFilteredCards([])}
+              >
+                Clear Results
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 px-5">
+            {filteredCards.map((card: any) => {
+              return (
+                <div
+                  className="grid grid-cols-1 bg-slate-50 mx-auto my-1 w-full"
+                  key={card[0].name}
+                >
+                  <div className="flex flex-col p-1 border border-gray-800 bg-rose-50">
+                    <div className="flex flex-row justify-between">
+                      <h1 className="text-sm">
+                        {card[0].name.split(" // ")[0]}
+                      </h1>
+                      <h1 className="text-sm">{card[0].manaCost}</h1>
+                    </div>
+                    <div className="">
+                      <div className="flex flex-row justify-between">
+                        <h1 className="text-sm">{card[0].type}</h1>
+                        {card[0].printings ? (
+                          <h1 className="text-sm">{card[0].printings[0]}</h1>
+                        ) : null}
+                      </div>
+                      <p className="text-xs">{card[0].text}</p>
+                      {card[0].power && card[0].toughness ? (
+                        <h1 className="text-sm ml-auto text-right">
+                          {card[0].power}/{card[0].toughness}
+                        </h1>
+                      ) : null}
+                    </div>
+                  </div>
+                  {card[1] ? (
+                    <div className="h-full">
+                      <h1 className="text-sm text-left text-gray-900 bg-blue-100 border-x border-gray-800 p-1">
+                        Back:
+                      </h1>
+                      <div className="p-1 border border-gray-800 bg-rose-50">
+                        <div className="flex flex-row justify-between">
+                          <h1 className="text-sm">
+                            {card[1].name.split(" // ")[1]}
+                          </h1>
+                          <h1 className="text-sm">{card[1].manaCost}</h1>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <h1 className="text-sm">{card[1].type}</h1>
+                          <h1 className="text-sm">{card[1].printings[0]}</h1>
+                        </div>
+                        <p className="text-xs">{card[1].text}</p>
+                        {card[1].power && card[1].toughness ? (
+                          <h1 className="text-sm ml-auto text-right">
+                            {card[0].power}/{card[0].toughness}
+                          </h1>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       {decks.length <= 0 ? (
         <form
           className="flex flex-col bg-orange-200 border-t border-b border-black w-3/4 mx-auto"
@@ -281,11 +411,16 @@ function App() {
         {decks.length >= 2 ? (
           <div className="flex flex-col w-3/4 mx-auto bg-sky-400 border-y border-black py-5">
             {first === 0 ? (
-            <button onClick={() => handleFirst()} className="mx-auto text-center w-1/2 bg-cyan-300 py-5">
-              Who goes first
-            </button>
+              <button
+                onClick={() => handleFirst()}
+                className="mx-auto text-center w-1/2 bg-cyan-300 py-5"
+              >
+                Coin Flip
+              </button>
             ) : (
-            <div className="w-1/2 mx-auto text-center">Player {first} goes first</div>
+              <div className="w-1/2 mx-auto text-center">
+                Player {first} goes first
+              </div>
             )}
           </div>
         ) : null}
@@ -299,6 +434,54 @@ function App() {
             <h1 className="text-2xl text-center py-5 bg-green-300">
               {deck.name}
             </h1>
+            <div className="flex flex-col bg-yellow-200 py-2 px-5">
+              <div className="flex flex-row justify-between">
+                <h1 className="text-2xl">Turn {turn[index]}</h1>
+                <h1 className="text-2xl">Life: {life[index]}</h1>
+              </div>
+              <div className="flex flex-col my-2 text-2xl">
+                {first != 0 ? (
+                  <div>
+                    {whoseTurn[index].turn === true ? (
+                      <h1>It's your turn</h1>
+                    ) : (
+                      <h1>It's your opponent's turn</h1>
+                    )}
+                  </div>
+                ) : null}
+                <div className="flex flex-row px-2 w-3/4 mx-auto mt-2 justify-between">
+                  {phases.map((phase: any, index2: any) => {
+                    return (
+                      <div
+                        key={index2}
+                        className={`flex flex-col text-center text-sm ${
+                          whoseTurn[index].turn === true
+                            ? phase.current
+                              ? "text-blue-500"
+                              : "text-black"
+                            : phase.current
+                            ? "text-red-500"
+                            : "text-black"
+                        }`}
+                      >
+                        <h1>{phase.phase}</h1>
+                        <h1>{phase.current ? "True" : "False"}</h1>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            {whoseTurn[index].turn === true ? (
+              <div className="flex p-2 bg-purple-300">
+                <button
+                  className="p-5 bg-blue-100 w-1/2 mx-auto"
+                  onClick={() => handleChangePhase(index)}
+                >
+                  Next Phase
+                </button>
+              </div>
+            ) : null}
             <div className="flex flex-col bg-orange-200 py-2">
               <input
                 className="p-5 w-1/2 mx-auto my-2"
@@ -414,72 +597,6 @@ function App() {
           </div>
         );
       })}
-      {filteredCards.length > 0 ? (
-        <div className="flex flex-col bg-green-100 w-3/4 mx-auto pb-2 border-t border-black">
-          <div className="bg-violet-500 text-white px-5 pb-2 mb-2">
-            <h1 className="text-2xl text-center py-2.5">Search Results</h1>
-            <div className="">Number of results: {filteredCards.length}</div>
-          </div>
-          <div className="grid grid-cols-2 gap-2 px-5">
-            {filteredCards.map((card: any) => {
-              return (
-                <div
-                  className="grid grid-cols-1 bg-slate-50 mx-auto my-1 w-full"
-                  key={card[0].name}
-                >
-                  <div className="flex flex-col p-1 border border-gray-800 bg-rose-50">
-                    <div className="flex flex-row justify-between">
-                      <h1 className="text-sm">
-                        {card[0].name.split(" // ")[0]}
-                      </h1>
-                      <h1 className="text-sm">{card[0].manaCost}</h1>
-                    </div>
-                    <div className="">
-                      <div className="flex flex-row justify-between">
-                        <h1 className="text-sm">{card[0].type}</h1>
-                        {card[0].printings ? (
-                          <h1 className="text-sm">{card[0].printings[0]}</h1>
-                        ) : null}
-                      </div>
-                      <p className="text-xs">{card[0].text}</p>
-                      {card[0].power && card[0].toughness ? (
-                        <h1 className="text-sm ml-auto text-right">
-                          {card[0].power}/{card[0].toughness}
-                        </h1>
-                      ) : null}
-                    </div>
-                  </div>
-                  {card[1] ? (
-                    <div className="h-full">
-                      <h1 className="text-sm text-left text-gray-900 bg-blue-100 border-x border-gray-800 p-1">
-                        Back:
-                      </h1>
-                      <div className="p-1 border border-gray-800 bg-rose-50">
-                        <div className="flex flex-row justify-between">
-                          <h1 className="text-sm">
-                            {card[1].name.split(" // ")[1]}
-                          </h1>
-                          <h1 className="text-sm">{card[1].manaCost}</h1>
-                        </div>
-                        <div className="flex flex-row justify-between">
-                          <h1 className="text-sm">{card[1].type}</h1>
-                          <h1 className="text-sm">{card[1].printings[0]}</h1>
-                        </div>
-                        <p className="text-xs">{card[1].text}</p>
-                        {card[1].power && card[1].toughness ? (
-                          <h1 className="text-sm ml-auto text-right">
-                            {card[0].power}/{card[0].toughness}
-                          </h1>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
