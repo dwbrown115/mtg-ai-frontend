@@ -11,20 +11,19 @@ import StandardAtomic from "../jsonFiles/StandardAtomic.json";
 function App() {
   const [cards, setCards] = useState<any>({});
   const [search, setSearch] = useState("plains");
-  const [deck1, setDeck1] = useState(
-    "30 Plains 30 Mountain"
-  );
-  const [deck2, setDeck2] = useState("30 Forest 30 Swamp")
+  const [deck1, setDeck1] = useState("30 Plains 30 Mountain");
+  const [deck2, setDeck2] = useState("30 Forest 30 Swamp");
   const [filteredCards, setFilteredCards] = useState<any[]>([]);
-  const [showDeck, setShowDeck] = useState([false, false]);
-  const [draw, setDraw] = useState<any>([])
-  const [life, setLife] = useState(20)
-  const [decks, setDecks] = useState<any>([]);
-  const [graveyard, setGraveyard] = useState<any[]>([])
-  const [exile, setExile] = useState<any[]>([])
+  const [showDeck, setShowDeck] = useState<any[]>([false, false]);
+  const [first, setFirst] = useState<number>(0);
+  const [draw, setDraw] = useState<any[]>([]);
+  const [life, setLife] = useState<any[]>([20, 20]);
+  const [decks, setDecks] = useState<any[]>([]);
+  const [graveyard, setGraveyard] = useState<any[]>([]);
+  const [exile, setExile] = useState<any[]>([]);
   const [hand, setHand] = useState<any[]>([]);
-  const [lands, setLands] = useState<any[]>([])
-  const [battlefield, setBattlefield] = useState<any[]>([])
+  const [lands, setLands] = useState<any[]>([]);
+  const [battlefield, setBattlefield] = useState<any[]>([]);
 
   useEffect(() => {
     const data = (StandardAtomic as { data: any }).data;
@@ -39,9 +38,14 @@ function App() {
     //  });
   }, []);
 
-  useEffect(() => {
-    // console.log(cards, "cards")
-  }, [cards]);
+  function handleFirst() {
+    const players = decks.length;
+
+    if (players >= 2) {
+      const random = Math.floor(Math.random() * players) + 1;
+      setFirst(random);
+    }
+  }
 
   function searchObject(obj: any, searchValue: string) {
     const result = [];
@@ -70,9 +74,12 @@ function App() {
     const result = searchObject(cards, search);
 
     if (result) {
-      setFilteredCards(result);
-    } else {
-      setFilteredCards([]);
+      if (result.length > 0) {
+        setFilteredCards(result);
+        //console.log(result)
+      } else if (result.length < 0) {
+        setFilteredCards([]);
+      }
     }
   }
 
@@ -105,13 +112,18 @@ function App() {
     return null; // No exact match found
   }
 
-  function handleStringSplit(e: any, deck: string, name: string) {
+  function handleStringSplit(
+    e: any,
+    deck: string,
+    name: string,
+    index: number
+  ) {
     e.preventDefault();
 
     const Deck = [];
-   // console.log("splitting string");
+    // console.log("splitting string");
     const result = parseCardString(deck);
-   // console.log(result, "result");
+    // console.log(result, "result");
     for (let i = 0; i < result.length; i++) {
       // console.log(result[i].card, "card name")
       const card = findExactMatch(cards, result[i].card);
@@ -124,14 +136,14 @@ function App() {
       }
       // console.log(set, "set")
     }
-   // console.log(Deck, "deck")
-    const newDeck = { name, cards: Deck}
-    const newHand = { name, cards: []}
-    const newDraw = 0
+    // console.log(Deck, "deck")
+    const newDeck = { name, cards: Deck };
+    const newHand = { name, cards: [] };
+    const newDraw = 0;
     // setDeck(...deck, { name, cards: Deck});
     setDecks([...decks, newDeck]);
-    setHand([...hand, newHand])
-    setDraw([...draw, newDraw])
+    setHand([...hand, newHand]);
+    setDraw([...draw, newDraw]);
   }
 
   //useEffect(() => {
@@ -159,12 +171,12 @@ function App() {
     console.log(shuffledDeck, "suffled deck");
     const newDecks = [...decks];
     newDecks[index].cards = shuffledDeck;
-    setDecks(newDecks)
+    setDecks(newDecks);
   }
 
   function handleDraw(index: number) {
     const newDeck = [...decks];
-    const newHand = [...hand]
+    const newHand = [...hand];
 
     // Check if the count is valid
     if (draw[index] <= 0 || draw[index] > newDeck[index].cards.length) {
@@ -179,10 +191,10 @@ function App() {
     const drawnCards = newDeck[index].cards.splice(0, draw[index]);
     newHand[index].cards = drawnCards;
 
-    setHand(newHand)
-    setDecks(newDeck)
+    setHand(newHand);
+    setDecks(newDeck);
     //console.log(drawnCards, "cards drawn")
-    // newDeck[index].cards = 
+    // newDeck[index].cards =
     // console.log(sourceCopy, "source array copy");
     // console.log(removedObjects, "removed objects");
 
@@ -190,9 +202,9 @@ function App() {
     // setHand([...hand, ...removedObjects]);
   }
 
-  //useEffect(() => {
-  // console.log(hand, "hand");
-  //}, [hand]);
+  useEffect(() => {
+    console.log(filteredCards, "filtered cards");
+  }, [filteredCards]);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -202,19 +214,16 @@ function App() {
   //   );
   // });
 
-
-
-
   function handleShowDeck(index: number) {
     const newShowDeck = [...showDeck];
     newShowDeck[index] = !newShowDeck[index];
-    setShowDeck(newShowDeck)
+    setShowDeck(newShowDeck);
   }
 
   function handleDrawCount(index: number, count: number) {
     const newDraw = [...draw];
     newDraw[index] = count;
-    setDraw(newDraw)
+    setDraw(newDraw);
   }
 
   return (
@@ -223,7 +232,7 @@ function App() {
         MTG AI
       </h1>
       <form
-        className="flex flex-col w-3/4 mx-auto bg-yellow-100"
+        className="flex flex-col w-3/4 mx-auto bg-yellow-100 border-b border-black"
         onSubmit={handleSearch}
       >
         <input
@@ -236,117 +245,216 @@ function App() {
           Submit
         </button>
       </form>
-      <form
-        className="flex flex-col w-3/4 mx-auto bg-yellow-100"
-        onSubmit={(e) => handleStringSplit(e, deck1, "Deck 1")}
-      >
-        <div className="text-center text-xl">Deck 1</div>
-        <textarea
-          className="p-5 w-1/2 mx-auto my-2"
-          value={deck1}
-          onChange={(e: any) => setDeck1(e.target.value)}
-        />
-        <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">Upload Deck</button>
-      </form>
-      <form
-        className="flex flex-col w-3/4 mx-auto bg-yellow-100"
-        onSubmit={(e) => handleStringSplit(e, deck2, "Deck 2")}
-      >
-        <div className="text-center text-xl">Deck 2</div>
-        <textarea
-          className="p-5 w-1/2 mx-auto my-2"
-          value={deck2}
-          onChange={(e: any) => setDeck2(e.target.value)}
-        />
-        <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">
-          Upload Deck
-        </button>
-      </form>
+      {decks.length <= 0 ? (
+        <form
+          className="flex flex-col bg-orange-200 border-t border-b border-black w-3/4 mx-auto"
+          onSubmit={(e) => handleStringSplit(e, deck1, "Player 1", 0)}
+        >
+          <h1 className="text-2xl text-center py-5 bg-green-300">Player 1</h1>
+          <textarea
+            className="p-5 w-1/2 mx-auto my-2"
+            value={deck1}
+            onChange={(e: any) => setDeck1(e.target.value)}
+          />
+          <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">
+            Upload Deck
+          </button>
+        </form>
+      ) : null}
+      {decks.length <= 1 ? (
+        <form
+          className="flex flex-col bg-orange-200 border-t border-b border-black w-3/4 mx-auto"
+          onSubmit={(e) => handleStringSplit(e, deck2, "Player 2", 1)}
+        >
+          <h1 className="text-2xl text-center py-5 bg-green-300">Player 2</h1>
+          <textarea
+            className="p-5 w-1/2 mx-auto my-2"
+            value={deck2}
+            onChange={(e: any) => setDeck2(e.target.value)}
+          />
+          <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2" type="submit">
+            Upload Deck
+          </button>
+        </form>
+      ) : null}
+      <div>
+        {decks.length >= 2 ? (
+          <div className="flex flex-col w-3/4 mx-auto bg-sky-400 border-y border-black py-5">
+            {first === 0 ? (
+            <button onClick={() => handleFirst()} className="mx-auto text-center w-1/2 bg-cyan-300 py-5">
+              Who goes first
+            </button>
+            ) : (
+            <div className="w-1/2 mx-auto text-center">Player {first} goes first</div>
+            )}
+          </div>
+        ) : null}
+      </div>
       {decks?.map((deck: any, index: any) => {
         return (
-          <div key={index} className="border-t-2 border-b-2 border-black w-3/4 mx-auto ">
-            <h1 className="text-2xl text-center py-5 bg-green-300">{deck.name}</h1>
-      <div className="flex flex-col bg-orange-200 py-2">
-        <input 
-          className="p-5 w-1/2 mx-auto my-2"
-          type="number"
-          value={draw[index]}
-          onChange={(e: any) => handleDrawCount(index, e.target.value)}
-          />
-        <button
-          className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => handleDraw(index)}
-        >
-          Draw {draw[index]} Cards
-        </button>
-        <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
-          {hand[index]?.cards?.map((card: any, index: any) => {
-            return (
-              <div className="bg-slate-50" key={index}>
-                <div className="p-1 border border-gray-800 h-full">
-                  <div className="flex flex-row justify-between">
-                    <h1 className="text-sm">{card.name.split(" // ")[0]}</h1>
-                    <h1 className="text-sm">{card.manaCost}</h1>
-                  </div>
-                  <div className="flex flex-row justify-between">
-                    <h1 className="text-sm">{card.type}</h1>
-                    <h1 className="text-sm">{card.printings[0]}</h1>
-                  </div>
-                  <p className="text-xs">{card.text}</p>
-                  {card.power && card.toughness ? (
-                    <h1 className="text-sm ml-auto text-right">
-                      {card.power}/{card.toughness}
-                    </h1>
-                  ) : null}
-                </div>
+          <div
+            key={index}
+            className="border-t border-b border-black w-3/4 mx-auto "
+          >
+            <h1 className="text-2xl text-center py-5 bg-green-300">
+              {deck.name}
+            </h1>
+            <div className="flex flex-col bg-orange-200 py-2">
+              <input
+                className="p-5 w-1/2 mx-auto my-2"
+                type="number"
+                value={draw[index]}
+                onChange={(e: any) => handleDrawCount(index, e.target.value)}
+              />
+              <button
+                className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
+                onClick={() => handleDraw(index)}
+              >
+                Draw {draw[index]} Cards
+              </button>
+              <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
+                {hand[index]?.cards?.map((card: any, index: any) => {
+                  return (
+                    <div className="bg-slate-50" key={index}>
+                      <div className="p-1 border border-gray-800 h-full">
+                        <div className="flex flex-row justify-between">
+                          <h1 className="text-sm">
+                            {card.name.split(" // ")[0]}
+                          </h1>
+                          <h1 className="text-sm">{card.manaCost}</h1>
+                        </div>
+                        <div className="flex flex-row justify-between">
+                          <h1 className="text-sm">{card.type}</h1>
+                          <h1 className="text-sm">{card.printings[0]}</h1>
+                        </div>
+                        <p className="text-xs">{card.text}</p>
+                        {card.power && card.toughness ? (
+                          <h1 className="text-sm ml-auto text-right">
+                            {card.power}/{card.toughness}
+                          </h1>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="flex flex-col bg-purple-100 py-2">
-        <div className="text-2xl text-center">
-          Cards Remaining: {deck.cards?.length}
-        </div>
-        <button
-          className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => handleShuffle(deck, index)}
-        >
-          Shuffle
-        </button>
-        <button
-          className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-          onClick={() => handleShowDeck(index)}
-        >
-          {showDeck[index] ? "Hide Deck" : "Show Deck"}
-        </button>
-        {showDeck[index] ? (
-          <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
-            {deck.cards?.map((card: any, index: any) => {
+            </div>
+            <div className="flex flex-col bg-purple-100 py-2">
+              <div className="text-2xl text-center">
+                Cards Remaining: {deck.cards?.length}
+              </div>
+              <button
+                className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
+                onClick={() => handleShuffle(deck, index)}
+              >
+                Shuffle
+              </button>
+              <button
+                className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
+                onClick={() => handleShowDeck(index)}
+              >
+                {showDeck[index] ? "Hide Deck" : "Show Deck"}
+              </button>
+              {showDeck[index] ? (
+                <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
+                  {deck.cards?.map((card: any, index: any) => {
+                    return (
+                      <div className="bg-slate-50" key={index}>
+                        <div className="p-1 border border-gray-800 h-full">
+                          <div className="flex flex-row justify-between">
+                            <h1 className="text-sm">
+                              {card.name?.split(" // ")[0]}
+                            </h1>
+                            <h1 className="text-sm">{card.manaCost}</h1>
+                          </div>
+                          <div className="flex flex-row justify-between">
+                            <h1 className="text-sm">{card.type}</h1>
+                            <h1 className="text-sm">{card.printings[0]}</h1>
+                          </div>
+                          <p className="text-xs">{card.text}</p>
+                          {card.power && card.toughness ? (
+                            <h1 className="text-sm ml-auto text-right">
+                              {card.power}/{card.toughness}
+                            </h1>
+                          ) : null}
+                        </div>
+                        {card[1] ? (
+                          <div>
+                            <h1 className="text-sm text-left text-gray-900 bg-blue-100 border-x border-gray-800 p-1">
+                              Back:
+                            </h1>
+                            <div className="p-1 border border-gray-800">
+                              <div className="flex flex-row justify-between">
+                                <h1 className="text-sm">
+                                  {card[1].name.split(" // ")[1]}
+                                </h1>
+                                <h1 className="text-sm">{card[1].manaCost}</h1>
+                              </div>
+                              <div className="flex flex-row justify-between">
+                                <h1 className="text-sm">{card[1].type}</h1>
+                                <h1 className="text-sm">
+                                  {card[1].printings[0]}
+                                </h1>
+                              </div>
+                              <p className="text-xs">{card[1].text}</p>
+                              {card[1].power && card[1].toughness ? (
+                                <h1 className="text-sm ml-auto text-right">
+                                  {card[0].power}/{card[0].toughness}
+                                </h1>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        );
+      })}
+      {filteredCards.length > 0 ? (
+        <div className="flex flex-col bg-green-100 w-3/4 mx-auto pb-2 border-t border-black">
+          <div className="bg-violet-500 text-white px-5 pb-2 mb-2">
+            <h1 className="text-2xl text-center py-2.5">Search Results</h1>
+            <div className="">Number of results: {filteredCards.length}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 px-5">
+            {filteredCards.map((card: any) => {
               return (
-                <div className="bg-slate-50" key={index}>
-                  <div className="p-1 border border-gray-800 h-full">
+                <div
+                  className="grid grid-cols-1 bg-slate-50 mx-auto my-1 w-full"
+                  key={card[0].name}
+                >
+                  <div className="flex flex-col p-1 border border-gray-800 bg-rose-50">
                     <div className="flex flex-row justify-between">
-                      <h1 className="text-sm">{card.name?.split(" // ")[0]}</h1>
-                      <h1 className="text-sm">{card.manaCost}</h1>
-                    </div>
-                    <div className="flex flex-row justify-between">
-                      <h1 className="text-sm">{card.type}</h1>
-                      <h1 className="text-sm">{card.printings[0]}</h1>
-                    </div>
-                    <p className="text-xs">{card.text}</p>
-                    {card.power && card.toughness ? (
-                      <h1 className="text-sm ml-auto text-right">
-                        {card.power}/{card.toughness}
+                      <h1 className="text-sm">
+                        {card[0].name.split(" // ")[0]}
                       </h1>
-                    ) : null}
+                      <h1 className="text-sm">{card[0].manaCost}</h1>
+                    </div>
+                    <div className="">
+                      <div className="flex flex-row justify-between">
+                        <h1 className="text-sm">{card[0].type}</h1>
+                        {card[0].printings ? (
+                          <h1 className="text-sm">{card[0].printings[0]}</h1>
+                        ) : null}
+                      </div>
+                      <p className="text-xs">{card[0].text}</p>
+                      {card[0].power && card[0].toughness ? (
+                        <h1 className="text-sm ml-auto text-right">
+                          {card[0].power}/{card[0].toughness}
+                        </h1>
+                      ) : null}
+                    </div>
                   </div>
                   {card[1] ? (
-                    <div>
+                    <div className="h-full">
                       <h1 className="text-sm text-left text-gray-900 bg-blue-100 border-x border-gray-800 p-1">
                         Back:
                       </h1>
-                      <div className="p-1 border border-gray-800">
+                      <div className="p-1 border border-gray-800 bg-rose-50">
                         <div className="flex flex-row justify-between">
                           <h1 className="text-sm">
                             {card[1].name.split(" // ")[1]}
@@ -370,60 +478,8 @@ function App() {
               );
             })}
           </div>
-        ) : null}
-      </div>
-      </div>
-        )
-      })}
-      <div className="flex flex-col bg-green-100 w-3/4 mx-auto py-2">
-        {filteredCards.map((card: any) => {
-          return (
-            <div className="bg-slate-50 w-1/2 mx-auto my-1" key={card[0].name}>
-              <div className="p-1 border border-gray-800">
-                <div className="flex flex-row justify-between">
-                  <h1 className="text-sm">{card[0].name.split(" // ")[0]}</h1>
-                  <h1 className="text-sm">{card[0].manaCost}</h1>
-                </div>
-                <div className="flex flex-row justify-between">
-                  <h1 className="text-sm">{card[0].type}</h1>
-                  <h1 className="text-sm">{card[0].printings[0]}</h1>
-                </div>
-                <p className="text-xs">{card[0].text}</p>
-                {card[0].power && card[0].toughness ? (
-                  <h1 className="text-sm ml-auto text-right">
-                    {card[0].power}/{card[0].toughness}
-                  </h1>
-                ) : null}
-              </div>
-              {card[1] ? (
-                <div>
-                  <h1 className="text-sm text-left text-gray-900 bg-blue-100 border-x border-gray-800 p-1">
-                    Back:
-                  </h1>
-                  <div className="p-1 border border-gray-800">
-                    <div className="flex flex-row justify-between">
-                      <h1 className="text-sm">
-                        {card[1].name.split(" // ")[1]}
-                      </h1>
-                      <h1 className="text-sm">{card[1].manaCost}</h1>
-                    </div>
-                    <div className="flex flex-row justify-between">
-                      <h1 className="text-sm">{card[1].type}</h1>
-                      <h1 className="text-sm">{card[1].printings[0]}</h1>
-                    </div>
-                    <p className="text-xs">{card[1].text}</p>
-                    {card[1].power && card[1].toughness ? (
-                      <h1 className="text-sm ml-auto text-right">
-                        {card[0].power}/{card[0].toughness}
-                      </h1>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
