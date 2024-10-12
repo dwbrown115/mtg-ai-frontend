@@ -16,11 +16,17 @@ function App() {
   const [filteredCards, setFilteredCards] = useState<any[]>([]);
   const [showDeck, setShowDeck] = useState<any[]>([false, false]);
   const [first, setFirst] = useState<number>(0);
-  const [draw, setDraw] = useState<any[]>([]);
+  const [draw, setDraw] = useState<any[]>([0, 0]);
   const [turn, setTurn] = useState<any[]>([0, 0]);
   const [whoseTurn, setWhoseTurn] = useState<any[]>([]);
   const [life, setLife] = useState<any[]>([20, 20]);
   const phase = [
+    {
+      phase: "mulligan",
+      current: true,
+      completed: false,
+      show: false,
+    },
     { phase: "untap", current: false },
     { phase: "upkeep", current: false },
     { phase: "draw", current: false },
@@ -30,6 +36,8 @@ function App() {
     { phase: "end", current: false },
   ];
   const [phases, setPhases] = useState<any[]>(phase);
+  const [numberMulligan, setNumberMulligan] = useState<any[]>([0, 0])
+  const [numberFinishedMuligan, setNumberFinishedMuligan] = useState<number>(0);
   const [phaseTracker, setPhaseTracker] = useState<number>(0);
   const [decks, setDecks] = useState<any[]>([]);
   const [graveyard, setGraveyard] = useState<any[]>([]);
@@ -53,24 +61,38 @@ function App() {
 
   function handleFirst() {
     const players = decks.length;
+    const newGraveyard = [...graveyard]
 
     if (players >= 2) {
       const random = Math.floor(Math.random() * players);
-      console.log(random);
       setFirst(random + 1);
       const newWhoseTurn = [...whoseTurn];
       newWhoseTurn[random].turn = true;
       setWhoseTurn(newWhoseTurn);
 
-      const newTurn = [...turn];
-      newTurn[random] = 1;
-      setTurn(newTurn);
+      //console.log(decks[0].cards, "deck 1")
+      for (let i = 0; i < players; i++) {
+        console.log("draw");
+        const graveyardObject = { player: decks[i].name, cards: []}
+        newGraveyard.push(graveyardObject)
+        handleShuffle(decks[i].cards, i)
+        handleDraw(i, 6);
+      }
 
       const newPhases = [...phases];
-      // newPhases[0].main1 = true;
-      newPhases[3].current = true;
+
+      newPhases[0].show = true;
       setPhases(newPhases);
-      setPhaseTracker(3);
+
+      //const newTurn = [...turn];
+      //newTurn[random] = 1;
+      //setTurn(newTurn);
+
+      //const newPhases = [...phases];
+      // newPhases[0].main1 = true;
+      //newPhases[3].current = true;
+      //setPhases(newPhases);
+      //setPhaseTracker(3);
     }
   }
 
@@ -207,6 +229,7 @@ function App() {
   //}, [showDeck])
 
   function shuffleArrayOfObjects(array: any) {
+    //console.log(array, "array")
     let currentIndex = array.length;
 
     while (currentIndex !== 0) {
@@ -223,19 +246,21 @@ function App() {
   }
 
   function handleShuffle(object: any, index: number) {
-    const shuffledDeck = shuffleArrayOfObjects(object.cards);
+    //console.log(object, "deck")
+    const shuffledDeck = shuffleArrayOfObjects(object);
     console.log(shuffledDeck, "suffled deck");
     const newDecks = [...decks];
     newDecks[index].cards = shuffledDeck;
     setDecks(newDecks);
   }
 
-  function handleDraw(index: number) {
+  function handleDraw(index: number, number: number) {
     const newDeck = [...decks];
     const newHand = [...hand];
+    // console.log(newHand, "new hand");
 
     // Check if the count is valid
-    if (draw[index] <= 0 || draw[index] > newDeck[index].cards.length) {
+    if (number <= 0 || number > newDeck[index].cards.length) {
       console.error("Invalid count provided.");
       return;
     }
@@ -244,8 +269,8 @@ function App() {
     // const endIndex = count - 1;
 
     // Remove the specified number of elements from the front of the source array
-    const drawnCards = newDeck[index].cards.splice(0, draw[index]);
-    newHand[index].cards = drawnCards;
+    const drawnCards = newDeck[index].cards.splice(0, number);
+    newHand[index].cards.push(...drawnCards);
 
     setHand(newHand);
     setDecks(newDeck);
@@ -259,8 +284,8 @@ function App() {
   }
 
   useEffect(() => {
-    //console.log(filteredCards, "filtered cards");
-  }, []);
+    // console.log(hand, "deck");
+  }, [hand]);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -282,8 +307,44 @@ function App() {
     setDraw(newDraw);
   }
 
+  function handleMuligan(index: number) {
+    let draw: number = 6
+    const newNumberMulligan = [...numberMulligan]
+
+    handleShuffle(decks[index].cards, index)
+
+    newNumberMulligan[index] = numberMulligan[index] + 1
+    console.log(newNumberMulligan[index], "number mulligan")
+    draw = draw - newNumberMulligan[index]
+    console.log(draw, "draw")
+
+    const newDeck = [...decks];
+    // newDeck[index].cards.push(...hand[index].cards);
+    // const newHand = [...hand];
+    // newHand[index].cards = [];
+
+    for (let i = 0; i < hand[index].cards.length; i++) {
+      newDeck[index].cards.push(hand[index].cards[i]);
+    }
+
+    const newHand = [...hand];
+    newHand[index].cards = [];
+
+    setHand(newHand);
+    setDecks(newDeck);
+    setNumberMulligan(newNumberMulligan)
+
+    handleDraw(index, draw)
+    
+  }
+
+  function handleKeep() {
+    const newPhases = [...phases];
+
+  }
+
   return (
-    <div className="flex flex-col bg-red-100 justify-center">
+    <div className="flex flex-col bg-red-100 justify-center pb-10">
       <h1 className="bg-blue-100 text-4xl text-center w-3/4 mx-auto py-2">
         MTG AI
       </h1>
@@ -491,10 +552,11 @@ function App() {
               />
               <button
                 className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-                onClick={() => handleDraw(index)}
+                onClick={() => handleDraw(index, draw[index])}
               >
                 Draw {draw[index]} Cards
               </button>
+              <h1 className="text-2xl text-center">Hand</h1>
               <div className="grid grid-cols-3 auto-rows-auto mx-auto gap-2 p-2">
                 {hand[index]?.cards?.map((card: any, index: any) => {
                   return (
@@ -521,6 +583,16 @@ function App() {
                   );
                 })}
               </div>
+              {phases[0].show === true ? (
+                <div className="flex flex-col">
+                  <button onClick={() => handleMuligan(index)} className="p-5 bg-blue-100 w-1/2 mx-auto mb-2">
+                    Mulligan
+                  </button>
+                  <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2">
+                    Keep hand
+                  </button>
+                </div>
+              ) : null}
             </div>
             <div className="flex flex-col bg-purple-100 py-2">
               <div className="text-2xl text-center">
@@ -528,7 +600,7 @@ function App() {
               </div>
               <button
                 className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
-                onClick={() => handleShuffle(deck, index)}
+                onClick={() => handleShuffle(deck.cards, index)}
               >
                 Shuffle
               </button>
