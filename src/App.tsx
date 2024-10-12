@@ -9,35 +9,35 @@ import { useEffect, useState } from "react";
 import StandardAtomic from "../jsonFiles/StandardAtomic.json";
 
 function App() {
-  const [cards, setCards] = useState<any>({});
+  const [cards, setCards] = useState<any>();
   const [search, setSearch] = useState("plains");
   const [deck1, setDeck1] = useState("30 Plains 30 Mountain");
   const [deck2, setDeck2] = useState("30 Forest 30 Swamp");
   const [filteredCards, setFilteredCards] = useState<any[]>([]);
   const [showDeck, setShowDeck] = useState<any[]>([false, false]);
   const [first, setFirst] = useState<number>(0);
-  const [draw, setDraw] = useState<any[]>([0, 0]);
-  const [turn, setTurn] = useState<any[]>([0, 0]);
+  const [draw, setDraw] = useState<any[]>([]);
+  const [turn, setTurn] = useState<any[]>([]);
   const [whoseTurn, setWhoseTurn] = useState<any[]>([]);
-  const [life, setLife] = useState<any[]>([20, 20]);
+  const [life, setLife] = useState<any[]>([]);
   const phase = [
     {
       phase: "mulligan",
       current: true,
-      completed: false,
-      show: false,
     },
     { phase: "untap", current: false },
     { phase: "upkeep", current: false },
     { phase: "draw", current: false },
-    { phase: "main1", current: false },
+    { phase: "main1", current: false
+     },
     { phase: "combat", current: false },
     { phase: "main2", current: false },
     { phase: "end", current: false },
   ];
   const [phases, setPhases] = useState<any[]>(phase);
-  const [numberMulligan, setNumberMulligan] = useState<any[]>([0, 0])
+  const [numberMulligan, setNumberMulligan] = useState<any[]>([]);
   const [numberFinishedMuligan, setNumberFinishedMuligan] = useState<number>(0);
+  const [showFinished, setShowFinished] = useState<any[]>([]);
   const [phaseTracker, setPhaseTracker] = useState<number>(0);
   const [decks, setDecks] = useState<any[]>([]);
   const [graveyard, setGraveyard] = useState<any[]>([]);
@@ -48,9 +48,10 @@ function App() {
 
   useEffect(() => {
     const data = (StandardAtomic as { data: any }).data;
-    // const data = {}
+    //const data = {}
 
-    // console.log(data);
+    //
+    //console.log(data);
     setCards(data);
 
     // Log each array
@@ -60,10 +61,12 @@ function App() {
   }, []);
 
   function handleFirst() {
+    console.log("first");
     const players = decks.length;
-    const newGraveyard = [...graveyard]
+    const newPhases = [...phases];
 
     if (players >= 2) {
+      const newShowFinished = [...showFinished];
       const random = Math.floor(Math.random() * players);
       setFirst(random + 1);
       const newWhoseTurn = [...whoseTurn];
@@ -73,13 +76,12 @@ function App() {
       //console.log(decks[0].cards, "deck 1")
       for (let i = 0; i < players; i++) {
         console.log("draw");
-        const graveyardObject = { player: decks[i].name, cards: []}
-        newGraveyard.push(graveyardObject)
-        handleShuffle(decks[i].cards, i)
+        newShowFinished.push(true);
+        handleShuffle(decks[i].cards, i);
         handleDraw(i, 6);
       }
 
-      const newPhases = [...phases];
+      setShowFinished(newShowFinished);
 
       newPhases[0].show = true;
       setPhases(newPhases);
@@ -187,12 +189,7 @@ function App() {
     return null; // No exact match found
   }
 
-  function handleStringSplit(
-    e: any,
-    deck: string,
-    name: string,
-    index: number
-  ) {
+  function handleDeckUpload(e: any, deck: string, name: string, index: number) {
     e.preventDefault();
 
     const Deck = [];
@@ -215,6 +212,19 @@ function App() {
     const newDeck = { name, cards: Deck };
     const newHand = { name, cards: [] };
     const newDraw = 0;
+
+    const graveyardObject = { player: name, cards: [] };
+    setGraveyard([...graveyard, graveyardObject]);
+    const landsObject = { player: name, cards: [] };
+    setLands([...lands, landsObject]);
+    const battlefieldObject = { player: name, cards: [] };
+    setBattlefield([...battlefield, battlefieldObject]);
+    const exileObject = { player: name, cards: [] };
+    setExile([...exile, exileObject]);
+
+    setTurn([...turn, 0]);
+    setLife([...life, 20]);
+    setNumberMulligan([...numberMulligan, 0]);
     // setDeck(...deck, { name, cards: Deck});
     setDecks([...decks, newDeck]);
     const player = { player: index, turn: false };
@@ -248,7 +258,7 @@ function App() {
   function handleShuffle(object: any, index: number) {
     //console.log(object, "deck")
     const shuffledDeck = shuffleArrayOfObjects(object);
-    console.log(shuffledDeck, "suffled deck");
+    // console.log(shuffledDeck, "suffled deck");
     const newDecks = [...decks];
     newDecks[index].cards = shuffledDeck;
     setDecks(newDecks);
@@ -285,7 +295,8 @@ function App() {
 
   useEffect(() => {
     // console.log(hand, "deck");
-  }, [hand]);
+    //console.log(showFinished, "show finished");
+  }, [showFinished]);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -308,15 +319,15 @@ function App() {
   }
 
   function handleMuligan(index: number) {
-    let draw: number = 6
-    const newNumberMulligan = [...numberMulligan]
+    let draw: number = 6;
+    const newNumberMulligan = [...numberMulligan];
 
-    handleShuffle(decks[index].cards, index)
+    handleShuffle(decks[index].cards, index);
 
-    newNumberMulligan[index] = numberMulligan[index] + 1
-    console.log(newNumberMulligan[index], "number mulligan")
-    draw = draw - newNumberMulligan[index]
-    console.log(draw, "draw")
+    newNumberMulligan[index] = numberMulligan[index] + 1;
+    console.log(newNumberMulligan[index], "number mulligan");
+    draw = draw - newNumberMulligan[index];
+    console.log(draw, "draw");
 
     const newDeck = [...decks];
     // newDeck[index].cards.push(...hand[index].cards);
@@ -332,16 +343,43 @@ function App() {
 
     setHand(newHand);
     setDecks(newDeck);
-    setNumberMulligan(newNumberMulligan)
+    setNumberMulligan(newNumberMulligan);
 
-    handleDraw(index, draw)
-    
+    handleDraw(index, draw);
   }
 
-  function handleKeep() {
-    const newPhases = [...phases];
+  function handleKeep(index: number) {
+    const newShowFinished = [...showFinished];
+    const players = decks.length;
 
+    if (numberFinishedMuligan < players) {
+      setNumberFinishedMuligan(numberFinishedMuligan + 1);
+      newShowFinished[index] = false;
+      setShowFinished(newShowFinished);
+    }
+
+    if (numberFinishedMuligan === players) {
+      // const drawnCards = newDeck[index].cards.splice(0, number);
+    }
   }
+
+  useEffect(() => {
+    // console.log(numberFinishedMuligan);
+    const newPhases = [...phases]
+    const players = decks.length;
+    if (players >= 2) {
+      if (numberFinishedMuligan < players) {
+        console.log("not finished");
+      } else if (numberFinishedMuligan >= players) {
+        console.log("finished");
+        newPhases.splice(0, 1)
+        newPhases[3].current = true
+        console.log(newPhases, "new phases")
+        setPhases(newPhases)
+
+      }
+    }
+  }, [numberFinishedMuligan]);
 
   return (
     <div className="flex flex-col bg-red-100 justify-center pb-10">
@@ -439,7 +477,7 @@ function App() {
       {decks.length <= 0 ? (
         <form
           className="flex flex-col bg-orange-200 border-t border-b border-black w-3/4 mx-auto"
-          onSubmit={(e) => handleStringSplit(e, deck1, "Player 1", 0)}
+          onSubmit={(e) => handleDeckUpload(e, deck1, "Player 1", 0)}
         >
           <h1 className="text-2xl text-center py-5 bg-green-300">Player 1</h1>
           <textarea
@@ -455,7 +493,7 @@ function App() {
       {decks.length <= 1 ? (
         <form
           className="flex flex-col bg-orange-200 border-t border-b border-black w-3/4 mx-auto"
-          onSubmit={(e) => handleStringSplit(e, deck2, "Player 2", 1)}
+          onSubmit={(e) => handleDeckUpload(e, deck2, "Player 2", 1)}
         >
           <h1 className="text-2xl text-center py-5 bg-green-300">Player 2</h1>
           <textarea
@@ -583,14 +621,22 @@ function App() {
                   );
                 })}
               </div>
-              {phases[0].show === true ? (
+              {showFinished[index] ? (
                 <div className="flex flex-col">
-                  <button onClick={() => handleMuligan(index)} className="p-5 bg-blue-100 w-1/2 mx-auto mb-2">
+                  <button
+                    onClick={() => handleMuligan(index)}
+                    className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
+                  >
                     Mulligan
                   </button>
-                  <button className="p-5 bg-blue-100 w-1/2 mx-auto mb-2">
-                    Keep hand
-                  </button>
+                  {showFinished[index] ? (
+                    <button
+                      onClick={() => handleKeep(index)}
+                      className="p-5 bg-blue-100 w-1/2 mx-auto mb-2"
+                    >
+                      Keep hand
+                    </button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
