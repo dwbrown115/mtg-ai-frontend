@@ -1,7 +1,8 @@
 {
-  "meta": { "date": "2024-05-25", "version": "5.2.2+20240525" },
+  "meta": { "date": "2024-10-12", "version": "5.2.2+20241012" },
   "data": {
     "abilityWords": [
+      "Eerie",
       "Battalion",
       "Bloodrush",
       "Channel",
@@ -58,7 +59,9 @@
       "Secret council",
       "Celebration",
       "Paradox",
-      "Will of the Planeswalkers"
+      "Will of the Planeswalkers",
+      "Survival",
+      "Valiant"
     ],
     "keywordAbilities": [
       "Living weapon",
@@ -256,9 +259,13 @@
       "Doctor's companion",
       "Landwalk",
       "Umbra armor",
+      "Freerunning",
       "Spree",
       "Saddle",
-      "Shadow"
+      "Shadow",
+      "Gift",
+      "Offspring",
+      "Impending"
     ],
     "keywordActions": [
       "Seek",
@@ -321,7 +328,9 @@
       "Suspect",
       "Collect evidence",
       "Role token",
-      "Plot"
+      "Plot",
+      "Forage",
+      "Manifest dread"
     ]
   }
 }
