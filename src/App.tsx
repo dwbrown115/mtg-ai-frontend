@@ -18,7 +18,8 @@ function App() {
   const [first, setFirst] = useState<number>(0);
   const [draw, setDraw] = useState<any[]>([]);
   const [turn, setTurn] = useState<any[]>([]);
-  const [whoseTurn, setWhoseTurn] = useState<any[]>([]);
+  const [whoseTurn, setWhoseTurn] = useState<number>(-1);
+  const [turnTracker, setTurnTracker] = useState<any[]>([]);
   const [life, setLife] = useState<any[]>([]);
   const phase = [
     {
@@ -28,8 +29,7 @@ function App() {
     { phase: "untap", current: false },
     { phase: "upkeep", current: false },
     { phase: "draw", current: false },
-    { phase: "main1", current: false
-     },
+    { phase: "main1", current: false },
     { phase: "combat", current: false },
     { phase: "main2", current: false },
     { phase: "end", current: false },
@@ -61,30 +61,32 @@ function App() {
   }, []);
 
   function handleFirst() {
-    console.log("first");
+    //console.log("first");
     const players = decks.length;
-    const newPhases = [...phases];
+    // const newPhases = [...phases];
 
     if (players >= 2) {
       const newShowFinished = [...showFinished];
       const random = Math.floor(Math.random() * players);
       setFirst(random + 1);
-      const newWhoseTurn = [...whoseTurn];
-      newWhoseTurn[random].turn = true;
-      setWhoseTurn(newWhoseTurn);
+      setWhoseTurn(random);
+      const newTurnTracker = [...turnTracker];
+      newTurnTracker[random].turn = true;
 
       //console.log(decks[0].cards, "deck 1")
       for (let i = 0; i < players; i++) {
-        console.log("draw");
+        //console.log("draw");
         newShowFinished.push(true);
+        newTurnTracker[i].mulligan = true;
         handleShuffle(decks[i].cards, i);
         handleDraw(i, 6);
       }
 
+      setTurnTracker(newTurnTracker);
       setShowFinished(newShowFinished);
 
-      newPhases[0].show = true;
-      setPhases(newPhases);
+      // newPhases[0].show = true;
+      // setPhases(newPhases);
 
       //const newTurn = [...turn];
       //newTurn[random] = 1;
@@ -99,23 +101,30 @@ function App() {
   }
 
   function handleChangePhase(player: number) {
-    if (whoseTurn[player].turn === true) {
+    if (turnTracker[player].turn === true) {
       const newPhases = [...phases];
       const numberOfPhases = newPhases.length;
-      const newPhaseTracker = phaseTracker + 1;
-      console.log(numberOfPhases);
-      console.log(newPhaseTracker);
+      let newPhaseTracker = phaseTracker + 1;
+      //console.log(numberOfPhases, "number of phases");
+      //console.log(newPhaseTracker + 1, "current phase");
       newPhases[phaseTracker].current = false;
+      if (newPhaseTracker > numberOfPhases) {
+        newPhaseTracker = 0
+        console.log(newPhaseTracker, "new phase tracker")
+      }
+
       if (newPhaseTracker < numberOfPhases) {
         newPhases[newPhaseTracker].current = true;
+        console.log("next phase")
         setPhases(newPhases);
         setPhaseTracker(newPhaseTracker);
       } else if (newPhaseTracker >= numberOfPhases) {
         newPhases[0].current = true;
+        console.log("start turn")
         setPhases(newPhases);
         setPhaseTracker(0);
       }
-      console.log(newPhases);
+      //console.log(newPhases);
       //setPhases(newPhases);
       //if (newPhaseTracker < phases[0].length) {
       //setPhaseTracker(newPhaseTracker);
@@ -124,6 +133,44 @@ function App() {
       //}
     }
   }
+
+  function handleNextTurn(player: number, index: number) {
+    const newTurn = [...turn];
+    const newTurnTracker = [...turnTracker];
+    const newPhases = [...phases]
+
+    console.log(`Player ${player + 1}'s turn`)
+
+    newTurn[player] += 1;
+    //console.log(newTurn)
+    newTurnTracker[index].turn = false;
+    newTurnTracker[player].turn = true;
+    //console.log(newTurnTracker)
+    newPhases[newPhases.length - 1].current = false;
+    newPhases[0].current = true;
+    //console.log(newPhases)
+
+    setTurn(newTurn);
+    setTurnTracker(newTurnTracker);
+    setWhoseTurn(player)
+  }
+
+  function handleEndTurn(index: number) {
+    const players = decks.length;
+
+    //console.log("end turn")
+    //console.log(turn[index], turn[index + 1])
+    if (turn[index] >= turn[index + 1]) {
+      console.log("next player");
+      handleNextTurn(index + 1, index)
+      setPhaseTracker(0)
+    } else if (index === players - 1) {
+      console.log("looping")
+      handleNextTurn(0, index)
+      setPhaseTracker(0)
+    }
+  }
+
   function searchObject(obj: any, searchValue: string) {
     const result = [];
     const searchLower = searchValue.toLowerCase(); // Convert search term to lowercase
@@ -227,9 +274,9 @@ function App() {
     setNumberMulligan([...numberMulligan, 0]);
     // setDeck(...deck, { name, cards: Deck});
     setDecks([...decks, newDeck]);
-    const player = { player: index, turn: false };
-    const newWhoseTurn = [...whoseTurn, player];
-    setWhoseTurn(newWhoseTurn);
+    const player = { player: index, turn: false, mulligan: false };
+    const newTurnTracker = [...turnTracker, player];
+    setTurnTracker(newTurnTracker);
     setHand([...hand, newHand]);
     setDraw([...draw, newDraw]);
   }
@@ -296,7 +343,10 @@ function App() {
   useEffect(() => {
     // console.log(hand, "deck");
     //console.log(showFinished, "show finished");
-  }, [showFinished]);
+    // console.log(whoseTurn, "whose turn");
+    //console.log(phaseTracker, "phaseTracker");
+    //console.log(turn, "turn")
+  }, [turn]);
 
   // const cardElements = Object.values(cards).map((card: any) => {
   //   return (
@@ -325,7 +375,7 @@ function App() {
     handleShuffle(decks[index].cards, index);
 
     newNumberMulligan[index] = numberMulligan[index] + 1;
-    console.log(newNumberMulligan[index], "number mulligan");
+    // console.log(newNumberMulligan[index], "number mulligan");
     draw = draw - newNumberMulligan[index];
     console.log(draw, "draw");
 
@@ -365,21 +415,25 @@ function App() {
 
   useEffect(() => {
     // console.log(numberFinishedMuligan);
-    const newPhases = [...phases]
+    const newPhases = [...phases];
     const players = decks.length;
+    const newTurn = [...turn];
     if (players >= 2) {
       if (numberFinishedMuligan < players) {
-        console.log("not finished");
-      } else if (numberFinishedMuligan >= players) {
-        console.log("finished");
-        newPhases.splice(0, 1)
-        newPhases[3].current = true
-        console.log(newPhases, "new phases")
-        setPhases(newPhases)
-
+        // console.log("not finished");
+      } else if (numberFinishedMuligan === players) {
+        // console.log("finished");
+        newPhases.splice(0, 1);
+        newPhases[3].current = true;
+        // console.log(newPhases, "new phases");
+        setPhases(newPhases);
+        setPhaseTracker(3);
+        setNumberFinishedMuligan(0);
+        newTurn[whoseTurn] += 1;
+        setTurn(newTurn);
       }
     }
-  }, [numberFinishedMuligan]);
+  }, [decks.length, numberFinishedMuligan, phases, turn, whoseTurn]);
 
   return (
     <div className="flex flex-col bg-red-100 justify-center pb-10">
@@ -534,53 +588,72 @@ function App() {
               {deck.name}
             </h1>
             <div className="flex flex-col bg-yellow-200 py-2 px-5">
-              <div className="flex flex-row justify-between">
-                <h1 className="text-2xl">Turn {turn[index]}</h1>
-                <h1 className="text-2xl">Life: {life[index]}</h1>
-              </div>
+              {whoseTurn !== -1 ? (
+                <div className="flex flex-row justify-between">
+                  <h1 className="text-2xl">Turn {turn[index]}</h1>
+                  <h1 className="text-2xl">Life: {life[index]}</h1>
+                </div>
+              ) : (
+                <h1 className="mt-2 text-center text-2xl">
+                  Flip a coin to see who goes first
+                </h1>
+              )}
               <div className="flex flex-col my-2 text-2xl">
                 {first != 0 ? (
                   <div>
-                    {whoseTurn[index].turn === true ? (
+                    {turnTracker[index].turn === true ? (
                       <h1>It's your turn</h1>
                     ) : (
                       <h1>It's your opponent's turn</h1>
                     )}
                   </div>
                 ) : null}
-                <div className="flex flex-row px-2 w-3/4 mx-auto mt-2 justify-between">
-                  {phases.map((phase: any, index2: any) => {
-                    return (
-                      <div
-                        key={index2}
-                        className={`flex flex-col text-center text-sm ${
-                          whoseTurn[index].turn === true
-                            ? phase.current
-                              ? "text-blue-500"
+                {whoseTurn !== -1 ? (
+                  <div className="flex flex-row px-2 w-3/4 mx-auto mt-2 justify-between">
+                    {phases.map((phase: any, index2: any) => {
+                      return (
+                        <div
+                          key={index2}
+                          className={`flex flex-col text-center text-sm ${
+                            turnTracker[index].turn === true
+                              ? phase.current
+                                ? "text-blue-500"
+                                : "text-black"
+                              : phase.current
+                              ? "text-red-500"
                               : "text-black"
-                            : phase.current
-                            ? "text-red-500"
-                            : "text-black"
-                        }`}
-                      >
-                        <h1>{phase.phase}</h1>
-                        <h1>{phase.current ? "True" : "False"}</h1>
-                      </div>
-                    );
-                  })}
-                </div>
+                          }`}
+                        >
+                          <h1>{phase.phase}</h1>
+                          <h1>{phase.current ? "True" : "False"}</h1>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
               </div>
             </div>
-            {whoseTurn[index].turn === true ? (
-              <div className="flex p-2 bg-purple-300">
-                <button
-                  className="p-5 bg-blue-100 w-1/2 mx-auto"
-                  onClick={() => handleChangePhase(index)}
-                >
-                  Next Phase
-                </button>
+            {phases[0].phase === "mulligan" ? null : (
+              <div>
+                {turnTracker[index].turn === true ? (
+                  <div className="flex p-2 bg-purple-300">
+                    {phases[6].current ? (
+                      <button onClick={() => handleEndTurn(index)} className="p-5 bg-blue-100 w-1/2 mx-auto">
+                        End Turn
+                      </button>
+                    ) : (
+                      <button
+                        className="p-5 bg-blue-100 w-1/2 mx-auto"
+                        onClick={() => handleChangePhase(index)}
+                      >
+                        Next Phase
+                      </button>
+                    )}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
+            )}
+
             <div className="flex flex-col bg-orange-200 py-2">
               <input
                 className="p-5 w-1/2 mx-auto my-2"
