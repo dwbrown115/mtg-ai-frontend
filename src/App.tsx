@@ -8,6 +8,26 @@ import { useEffect, useState } from "react";
 // import data from "../jsonFiles/data.json"
 import StandardAtomic from "../jsonFiles/StandardAtomic.json";
 
+interface Phase {
+  phase: string;
+  current: boolean;
+}
+
+const phase: Phase[] = [
+  {
+    phase: "mulligan",
+    current: true,
+  },
+  { phase: "untap", current: false },
+
+  { phase: "upkeep", current: false },
+  { phase: "draw", current: false },
+  { phase: "main1", current: false },
+  { phase: "combat", current: false },
+  { phase: "main2", current: false },
+  { phase: "end", current: false },
+];
+
 function App() {
   const [cards, setCards] = useState<any>();
   const [search, setSearch] = useState("plains");
@@ -21,24 +41,11 @@ function App() {
   const [whoseTurn, setWhoseTurn] = useState<number>(-1);
   const [turnTracker, setTurnTracker] = useState<any[]>([]);
   const [life, setLife] = useState<any[]>([]);
-  const phase = [
-    {
-      phase: "mulligan",
-      current: true,
-    },
-    { phase: "untap", current: false },
-    { phase: "upkeep", current: false },
-    { phase: "draw", current: false },
-    { phase: "main1", current: false },
-    { phase: "combat", current: false },
-    { phase: "main2", current: false },
-    { phase: "end", current: false },
-  ];
-  const [phases, setPhases] = useState<any[]>(phase);
+  const [phases, setPhases] = useState<Phase[]>(phase);
+  const [phaseTracker, setPhaseTracker] = useState<number>(0);
   const [numberMulligan, setNumberMulligan] = useState<any[]>([]);
   const [numberFinishedMuligan, setNumberFinishedMuligan] = useState<number>(0);
   const [showFinished, setShowFinished] = useState<any[]>([]);
-  const [phaseTracker, setPhaseTracker] = useState<number>(0);
   const [decks, setDecks] = useState<any[]>([]);
   const [graveyard, setGraveyard] = useState<any[]>([]);
   const [exile, setExile] = useState<any[]>([]);
@@ -59,6 +66,81 @@ function App() {
     //   console.log(array[0].name);
     //  });
   }, []);
+
+  function test(phase: string) {
+    console.log("phase", phase);
+  }
+
+  const actions: Record<string, Record<string, (phase: Phase) => void>> = {
+    mulligan: {
+      true: (phase: Phase) => {
+        test(phase.phase);
+      },
+    },
+    upkeep: {
+      true: (phase: Phase) => test(phase.phase),
+    },
+    untap: {
+      true: (phase: Phase) =>
+        console.log(`Action for id 2 when true: ${phase.phase}`),
+    },
+    draw: {
+      true: (phase: Phase) =>
+        console.log(`Action for id 3 when true: ${phase.phase}`),
+    },
+    main1: {
+      true: (phase: Phase) => test(phase.phase),
+    },
+    combat: {
+      true: (phase: Phase) =>
+        console.log(`Action for id 2 when true: ${phase.phase}`),
+    },
+    main2: {
+      true: (phase: Phase) =>
+        console.log(`Action for id 3 when true: ${phase.phase}`),
+    },
+    end: {
+      true: (phase: Phase) =>
+        console.log(`Action for id 3 when true: ${phase.phase}`),
+    },
+  };
+
+  function handleNextPhase() {
+    const index = phaseTracker;
+    let nextIndex: number = phaseTracker;
+
+    if (phases[nextIndex].current) {
+      phases.map((phase: Phase, index: number) => {
+        if (index === nextIndex) {
+          // console.log("equals next");
+          return { ...phase, current: true };
+        }
+        return phase;
+      });
+
+      //console.log(newPhases)
+
+      //setPhases(newPhases);
+      //console.log(
+      //  `${String(phases[nextIndex].current)} ${phases[nextIndex].phase}`
+      //);
+      actions[phases[index].phase][String(phases[index].current)](
+        phases[index]
+      );
+    }
+
+    if (index < phases.length - 1) {
+      nextIndex += 1;
+      phases[nextIndex].current = true;
+      phases[phaseTracker].current = false;
+    } else if (index >= phases.length - 1) {
+      nextIndex = 0;
+      phases[nextIndex].current = true;
+      phases[phaseTracker].current = false;
+    }
+
+    setPhaseTracker(nextIndex);
+  }
 
   function handleFirst() {
     //console.log("first");
@@ -109,18 +191,18 @@ function App() {
       //console.log(newPhaseTracker + 1, "current phase");
       newPhases[phaseTracker].current = false;
       if (newPhaseTracker > numberOfPhases) {
-        newPhaseTracker = 0
-        console.log(newPhaseTracker, "new phase tracker")
+        newPhaseTracker = 0;
+        console.log(newPhaseTracker, "new phase tracker");
       }
 
       if (newPhaseTracker < numberOfPhases) {
         newPhases[newPhaseTracker].current = true;
-        console.log("next phase")
+        console.log("next phase");
         setPhases(newPhases);
         setPhaseTracker(newPhaseTracker);
       } else if (newPhaseTracker >= numberOfPhases) {
         newPhases[0].current = true;
-        console.log("start turn")
+        console.log("start turn");
         setPhases(newPhases);
         setPhaseTracker(0);
       }
@@ -137,9 +219,9 @@ function App() {
   function handleNextTurn(player: number, index: number) {
     const newTurn = [...turn];
     const newTurnTracker = [...turnTracker];
-    const newPhases = [...phases]
+    const newPhases = [...phases];
 
-    console.log(`Player ${player + 1}'s turn`)
+    console.log(`Player ${player + 1}'s turn`);
 
     newTurn[player] += 1;
     //console.log(newTurn)
@@ -152,7 +234,7 @@ function App() {
 
     setTurn(newTurn);
     setTurnTracker(newTurnTracker);
-    setWhoseTurn(player)
+    setWhoseTurn(player);
   }
 
   function handleEndTurn(index: number) {
@@ -162,12 +244,12 @@ function App() {
     //console.log(turn[index], turn[index + 1])
     if (turn[index] >= turn[index + 1]) {
       console.log("next player");
-      handleNextTurn(index + 1, index)
-      setPhaseTracker(0)
+      handleNextTurn(index + 1, index);
+      setPhaseTracker(0);
     } else if (index === players - 1) {
-      console.log("looping")
-      handleNextTurn(0, index)
-      setPhaseTracker(0)
+      console.log("looping");
+      handleNextTurn(0, index);
+      setPhaseTracker(0);
     }
   }
 
@@ -437,6 +519,14 @@ function App() {
 
   return (
     <div className="flex flex-col bg-red-100 justify-center pb-10">
+      <div className="flex m-2">
+        <button
+          onClick={handleNextPhase}
+          className="mx-auto text-center w-1/2 bg-cyan-300 py-5"
+        >
+          Next
+        </button>
+      </div>
       <h1 className="bg-blue-100 text-4xl text-center w-3/4 mx-auto py-2">
         MTG AI
       </h1>
@@ -638,7 +728,10 @@ function App() {
                 {turnTracker[index].turn === true ? (
                   <div className="flex p-2 bg-purple-300">
                     {phases[6].current ? (
-                      <button onClick={() => handleEndTurn(index)} className="p-5 bg-blue-100 w-1/2 mx-auto">
+                      <button
+                        onClick={() => handleEndTurn(index)}
+                        className="p-5 bg-blue-100 w-1/2 mx-auto"
+                      >
                         End Turn
                       </button>
                     ) : (
